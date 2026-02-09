@@ -25,6 +25,9 @@ module uart_tx_tb;
 
     initial begin
         // Initialize signals
+        $dumpfile("uart_tx.vcd");
+        $dumpvars(0, uart_tx_tb);
+
         clk = 0;
         reset = 1;
         tx_start = 0;
