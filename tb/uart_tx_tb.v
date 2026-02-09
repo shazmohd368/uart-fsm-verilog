@@ -50,8 +50,9 @@ module uart_tx_tb;
         wait (tx_busy == 0);
 
         // Finish simulation
-        #200;
+        #50_000;
         $finish;
+
     end
 
 endmodule
