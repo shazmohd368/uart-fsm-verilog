@@ -2,7 +2,6 @@
 
 module uart_tx_tb;
 
-    // Testbench signals
     reg clk;
     reg reset;
     reg tx_start;
@@ -10,7 +9,6 @@ module uart_tx_tb;
     wire tx;
     wire tx_busy;
 
-    // Instantiate UART TX
     uart_tx uut (
         .clk(clk),
         .reset(reset),
@@ -20,11 +18,10 @@ module uart_tx_tb;
         .tx_busy(tx_busy)
     );
 
-    // Clock generation: 50 MHz (20 ns period)
+    // Clock generation: 50 MHz
     always #10 clk = ~clk;
 
     initial begin
-        // Initialize signals
         $dumpfile("uart_tx.vcd");
         $dumpvars(0, uart_tx_tb);
 
@@ -33,26 +30,19 @@ module uart_tx_tb;
         tx_start = 0;
         tx_data = 8'h00;
 
-        // Hold reset
         #100;
         reset = 0;
 
-        // Wait before transmission
         #100;
-
-        // Send one byte: 0xA5 (10100101)
         tx_data = 8'hA5;
         tx_start = 1;
         #20;
         tx_start = 0;
 
-        // Wait for transmission to complete
         wait (tx_busy == 0);
 
-        // Finish simulation
-        #50_000;
+        #2000000;
         $finish;
-
     end
 
 endmodule
