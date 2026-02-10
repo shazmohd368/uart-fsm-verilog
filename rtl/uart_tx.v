@@ -1,6 +1,6 @@
-// UART Transmitter (FSM-based)
+`timescale 1ns/1ps
+// UART Transmitter
 // 8 data bits, 1 start bit, 1 stop bit, no parity
-// Simulation-oriented, synthesizable RTL
 
 module uart_tx (
     input  wire       clk,
@@ -11,7 +11,7 @@ module uart_tx (
     output reg        tx_busy
 );
 
-    // UART parameters (can be changed for simulation)
+    // Parameters
     parameter CLOCK_FREQ = 50_000_000;
     parameter BAUD_RATE  = 9600;
     localparam BAUD_TICK = CLOCK_FREQ / BAUD_RATE;
@@ -27,7 +27,6 @@ module uart_tx (
     reg [2:0] bit_index;
     reg [7:0] tx_shift;
 
-    // State register
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             state      <= IDLE;
@@ -39,46 +38,56 @@ module uart_tx (
         end else begin
             case (state)
 
+                // ---------------- IDLE ----------------
                 IDLE: begin
                     tx <= 1'b1;
                     tx_busy <= 1'b0;
+                    baud_cnt <= 0;
+                    bit_index <= 0;
+
                     if (tx_start) begin
                         tx_shift <= tx_data;
                         state <= START;
-                        baud_cnt <= 0;
                         tx_busy <= 1'b1;
                     end
                 end
 
+                // ---------------- START ----------------
                 START: begin
                     tx <= 1'b0;
                     if (baud_cnt == BAUD_TICK - 1) begin
                         baud_cnt <= 0;
                         state <= DATA;
                         bit_index <= 0;
-                    end else
+                    end else begin
                         baud_cnt <= baud_cnt + 1;
+                    end
                 end
 
+                // ---------------- DATA ----------------
                 DATA: begin
                     tx <= tx_shift[bit_index];
                     if (baud_cnt == BAUD_TICK - 1) begin
                         baud_cnt <= 0;
-                        if (bit_index == 7)
-                            state <= STOP;
-                        else
+                        if (bit_index == 7) begin
+                            state <= STOP;      // 👈 move to STOP
+                        end else begin
                             bit_index <= bit_index + 1;
-                    end else
+                        end
+                    end else begin
                         baud_cnt <= baud_cnt + 1;
+                    end
                 end
 
+                // ---------------- STOP ----------------
                 STOP: begin
-                    tx <= 1'b1;
+                    tx <= 1'b1;                // STOP bit
                     if (baud_cnt == BAUD_TICK - 1) begin
                         baud_cnt <= 0;
                         state <= IDLE;
-                    end else
+                    end else begin
                         baud_cnt <= baud_cnt + 1;
+                    end
                 end
 
             endcase
