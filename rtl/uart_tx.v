@@ -13,7 +13,7 @@ module uart_tx (
 
     // Parameters
     parameter CLOCK_FREQ = 50_000_000;
-    parameter BAUD_RATE  = 9600;
+    parameter BAUD_RATE  = 1000000;   // high baud for clear simulation
     localparam BAUD_TICK = CLOCK_FREQ / BAUD_RATE;
 
     // FSM states
@@ -38,7 +38,6 @@ module uart_tx (
         end else begin
             case (state)
 
-                // ---------------- IDLE ----------------
                 IDLE: begin
                     tx <= 1'b1;
                     tx_busy <= 1'b0;
@@ -52,42 +51,35 @@ module uart_tx (
                     end
                 end
 
-                // ---------------- START ----------------
                 START: begin
                     tx <= 1'b0;
                     if (baud_cnt == BAUD_TICK - 1) begin
                         baud_cnt <= 0;
                         state <= DATA;
                         bit_index <= 0;
-                    end else begin
+                    end else
                         baud_cnt <= baud_cnt + 1;
-                    end
                 end
 
-                // ---------------- DATA ----------------
                 DATA: begin
                     tx <= tx_shift[bit_index];
                     if (baud_cnt == BAUD_TICK - 1) begin
                         baud_cnt <= 0;
-                        if (bit_index == 7) begin
-                            state <= STOP;      // 👈 move to STOP
-                        end else begin
+                        if (bit_index == 7)
+                            state <= STOP;
+                        else
                             bit_index <= bit_index + 1;
-                        end
-                    end else begin
+                    end else
                         baud_cnt <= baud_cnt + 1;
-                    end
                 end
 
-                // ---------------- STOP ----------------
                 STOP: begin
-                    tx <= 1'b1;                // STOP bit
+                    tx <= 1'b1;
                     if (baud_cnt == BAUD_TICK - 1) begin
                         baud_cnt <= 0;
                         state <= IDLE;
-                    end else begin
+                    end else
                         baud_cnt <= baud_cnt + 1;
-                    end
                 end
 
             endcase
